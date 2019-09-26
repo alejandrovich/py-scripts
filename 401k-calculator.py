@@ -17,12 +17,6 @@ def parse_args():
         type=Decimal,
         help='What amount have you contributed already this year?'
     )
-    # parser.add_argument(
-    #     'contribution_ytd',
-    #     metavar='N',
-    #     type=Decimal,
-    #     help='How much have you contributed already this year?'
-    # )
     parser.add_argument(
         'salary',
         metavar='N',
