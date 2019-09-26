@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import argparse
 from datetime import datetime
 from decimal import Decimal
@@ -9,7 +12,7 @@ _QUANTIZE = Decimal('.01')
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Calculate how much to contribute.'
+        description='Calculate how much to contribute to max out your 401k. Enter as many past contributions and a salary. e.g. `401k-calculator.py --cont 2000 --cont 1000 105000`'
     )
     parser.add_argument(
         '--cont',
