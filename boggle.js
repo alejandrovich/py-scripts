@@ -1,15 +1,14 @@
 /*
     A boggle board consists of 4 rows of 4 letters.
-*/
 
-// The board is indexed like a cartesian grid, with (x, y) coordinates as strings.
-/*
-    O W A G
-    L T B P
-    S L B E
-    D N E T
+    The board is indexed like a cartesian grid, with (x, y) coordinates as strings.
+    Bottom row starts (0,0) and goes up to (3,0), the next row up has y=1.
+        O W A G
+        L T B P
+        S L B E
+        D N E T
 
-    words in there: NET, LET, WAG, STAG, PET
+    Words in there: NET, LET, WAG, STAG, PET, SLEEP, TAG, GAB
 */
 
 // a node for a trie
@@ -17,33 +16,59 @@ const Node = (letter, isWord) => {
     const node = {
         letter: letter,
         isWord: isWord,
-        pointers: [],
+        pointers: {},  // hash of letter to Node
     };
-    node.get = letter => {
-        let newNode;
-        // console.log('searching for ' + letter + ' in ' + node.letter);
-        node.pointers.forEach(n => {
-            if(n.letter === letter) {
-                // console.log('found ' + letter + ' in ' + node.letter);
-                newNode = n;
-            }
-        });
-        if( newNode === undefined) {
-            newNode = Node(letter, false);
-            // console.log('appending ' + letter + ' to ' + node.letter)
-            node.pointers.push(newNode);
+
+    // contains: returns a Node corresponding to the letter sought. If it's not in the
+    // node, return undefined
+    node.contains = letter => {
+        if( node.pointers.hasOwnProperty(letter)) {
+            return node.pointers[letter]
         }
-        return newNode;
     };
+
+    // get: returns the Node corresponding to the letter sought. If it's not currently there,
+    //  create a new node and return it.
+    node.get = letter => {
+        // console.log('searching for ' + letter + ' in ' + node.letter);
+        const nextNode = node.contains(letter);
+
+        if( nextNode === undefined) {
+            const newNode = Node(letter, false);
+            // console.log('appending ' + letter + ' to ' + node.letter)
+            node.pointers[letter] = newNode;
+            return newNode;
+        }
+        return nextNode;
+    };
+
+    // sortedPointers: returns an array of letters (single character strings) sorted
+    // alphabetically.
+    node.sortedPointers = () => {
+        const keys = [];
+        for (var k in node.pointers) {
+            if (node.pointers.hasOwnProperty(k)) {
+                keys.push(k);
+            }
+        }
+        return keys.sort();
+    };
+
+    // Done constructing a Node, return the object
     return node;
 };
 
+const printNodeWords = (node, current) => {
+    // The root node has an empty string ('') as it's letter.
+    if(node.letter === '')
+        console.log('\nKnown Words');
 
-const printTrie = trie => {
-    console.log('root');
-    trie.root.pointers.forEach(n => {
-        console.log(n.letter)
-    })
+    if(node.isWord)
+        console.log(current + node.letter)
+    else {
+        const sortedLetters = node.sortedPointers();
+        sortedLetters.forEach(key => printNodeWords(node.pointers[key], current + node.letter))
+    }
 };
 
 const Trie = () => {
@@ -51,22 +76,37 @@ const Trie = () => {
         root: Node('', false),
     };
 
+    /*
+        addWord: For each letter, find the path for it if it exists
+    */
     trie.addWord = word => {
-        /*
-            For each letter, find the path for it if it exists
-        */
-        start = trie.root;
+        node = trie.root;
         [...word].forEach((char, index, array) => {
-            start = start.get(char);
+            node = node.get(char);
             if(index === array.length - 1)
-                start.isWord = true;
+                node.isWord = true;
         })
+    };
+
+    // findWord: Returns true if the word is in the Trie, otherwise
+    // returns false.
+    trie.findWord = word => {
+        node = trie.root;
+        for(let i = 0; i < word.length; i++) {
+            // console.log('finding ' + word[i] + ' in ' + node.letter);
+            node = node.contains(word[i]);
+            // console.log('at: ' + node.letter);
+            if(node === undefined) {
+                return false;
+            }
+        }
+        return node.isWord;
     };
     return trie;
 };
 
 mockWordList = ['NET', 'LET', 'WAG', 'STAG', 'PET', 'NEAT', ];
-board = {
+sampleBoard = {
     '00': 'D',
     '10': 'N',
     '20': 'E',
@@ -88,17 +128,18 @@ board = {
     '33': 'G',
 };
 
-for(let y = 3; y >= 0; y-- ) {
-    let row = '';
-    for(let x = 0; x < 4; x++ ) {
-        row += Node(board[x.toString() + y.toString()], false).letter
+const displayBoard = board => {
+    for(let y = 3; y >= 0; y-- ) {
+        let row = '';
+        for(let x = 0; x < 4; x++ ) {
+            row += board[x.toString() + y.toString()] + ' '
+        }
+        console.log(row);
     }
-    console.log(row);
-}
+};
 
-t = Trie()
-// word = 'foo';
-// [...word].forEach(c => console.log(c));
+displayBoard(sampleBoard);
+t = Trie();
 mockWordList.map(word => t.addWord(word));
-console.log(t)
-printTrie(t)
+printNodeWords(t.root, '');
+console.log(t.findWord('NET'));
